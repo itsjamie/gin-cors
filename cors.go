@@ -78,6 +78,16 @@ type Config struct {
 	credentials string
 }
 
+// One time, do the conversion from our the public facing Configuration,
+// to all the formats we use internally strings for headers.. slices for looping
+func (config *Config) prepare() {
+	config.origins = strings.Split(config.Origins, ", ")
+	config.methods = strings.Split(config.Methods, ", ")
+	config.requestHeaders = strings.Split(config.RequestHeaders, ", ")
+	config.maxAge = fmt.Sprintf("%.f", config.MaxAge.Seconds())
+	config.credentials = fmt.Sprintf("%t", config.Credentials)
+}
+
 /*
 Middleware generates a middleware handler function that works inside of a Gin request
 to set the correct CORS headers.  It accepts a cors.Options struct for configuration.
@@ -93,13 +103,7 @@ func Middleware(config Config) gin.HandlerFunc {
 		forceOriginMatch = true
 	}
 
-	// One time, do the conversion from our the public facing Configuration,
-	// to all the formats we use internally strings for headers.. slices for looping
-	config.origins = strings.Split(config.Origins, ", ")
-	config.methods = strings.Split(config.Methods, ", ")
-	config.requestHeaders = strings.Split(config.RequestHeaders, ", ")
-	config.maxAge = fmt.Sprintf("%f", config.MaxAge.Seconds())
-	config.credentials = fmt.Sprintf("%t", config.Credentials)
+	config.prepare()
 
 	// Create the Middleware function
 	return func(context *gin.Context) {
