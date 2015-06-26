@@ -218,7 +218,7 @@ func validateRequestHeaders(requestHeaders string, config Config) bool {
 		match := false
 
 		for _, value := range config.requestHeaders {
-			if value == header {
+			if strings.ToLower(value) == strings.ToLower(header) {
 				match = true
 				break
 			}

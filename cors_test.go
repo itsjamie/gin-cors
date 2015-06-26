@@ -109,6 +109,7 @@ func TestPreflightRequest(t *testing.T) {
 	req.Header.Set(OriginKey, "http://files.testing.com")
 	req.Header.Set(RequestMethodKey, "GET")
 	req.Header.Set(RequestHeadersKey, "Content-Type")
+	req.Header.Set(RequestHeadersKey, "accept")
 
 	router := gin.New()
 
