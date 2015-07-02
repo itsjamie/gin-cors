@@ -37,6 +37,10 @@ const (
 	ExposeHeadersKey  = "Access-Control-Expose-Headers"
 )
 
+const (
+	optionsMethod = "OPTIONS"
+)
+
 /*
 Config defines the configuration options available to control how the CORS middleware should function.
 */
@@ -85,7 +89,14 @@ func (config *Config) prepare() {
 	config.methods = strings.Split(config.Methods, ", ")
 	config.requestHeaders = strings.Split(config.RequestHeaders, ", ")
 	config.maxAge = fmt.Sprintf("%.f", config.MaxAge.Seconds())
+
+	// Generates a boolean of value "true".
 	config.credentials = fmt.Sprintf("%t", config.Credentials)
+
+	// Convert to lower-case once as request headers are supposed to be a case-insensitive match
+	for idx, header := range config.requestHeaders {
+		config.requestHeaders[idx] = strings.ToLower(header)
+	}
 }
 
 /*
@@ -118,19 +129,14 @@ func Middleware(config Config) gin.HandlerFunc {
 
 		originMatch := false
 		if !forceOriginMatch {
-			for _, value := range config.origins {
-				if value == currentOrigin {
-					originMatch = true
-					break
-				}
-			}
+			originMatch = matchOrigin(currentOrigin, config)
 		}
 
 		if forceOriginMatch || originMatch {
 			valid := false
 			preflight := false
 
-			if context.Request.Method == "OPTIONS" {
+			if context.Request.Method == optionsMethod {
 				requestMethod := context.Request.Header.Get(RequestMethodKey)
 				if requestMethod != "" {
 					preflight = true
@@ -143,6 +149,8 @@ func Middleware(config Config) gin.HandlerFunc {
 			}
 
 			if valid {
+
+				// Allowed origins cannot be the string "*" cannot be used for a resource that supports credentials.
 				if config.Credentials {
 					context.Writer.Header().Set(AllowCredentialsKey, config.credentials)
 					context.Writer.Header().Set(AllowOriginKey, currentOrigin)
@@ -191,6 +199,17 @@ func handleRequest(context *gin.Context, config Config) bool {
 	return true
 }
 
+// Case-sensitive match of origin header
+func matchOrigin(origin string, config Config) bool {
+	for _, value := range config.origins {
+		if value == origin {
+			return true
+		}
+	}
+	return false
+}
+
+// Case-sensitive match of request method
 func validateRequestMethod(requestMethod string, config Config) bool {
 	if !config.ValidateHeaders {
 		return true
@@ -207,6 +226,7 @@ func validateRequestMethod(requestMethod string, config Config) bool {
 	return false
 }
 
+// Case-insensitive match of request headers
 func validateRequestHeaders(requestHeaders string, config Config) bool {
 	if !config.ValidateHeaders {
 		return true
@@ -216,9 +236,10 @@ func validateRequestHeaders(requestHeaders string, config Config) bool {
 
 	for _, header := range headers {
 		match := false
+		header = strings.ToLower(header)
 
 		for _, value := range config.requestHeaders {
-			if strings.ToLower(value) == strings.ToLower(header) {
+			if value == header {
 				match = true
 				break
 			}
