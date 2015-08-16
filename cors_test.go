@@ -207,6 +207,29 @@ func TestForceOrigin(t *testing.T) {
 	}
 }
 
+func TestForceOriginCredentails(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/", nil)
+	w := httptest.NewRecorder()
+	
+	req.Header.Set("Origin", "http://localhost")
+	
+	router := gin.New()
+	router.Use(Middleware(Config{
+		Origins:         "http://localhost",
+		ValidateHeaders: true,
+		Credentials:     false,
+		RequestHeaders:  "Authorization, Content-Type, Accept",
+		ExposedHeaders:  "Authorization",
+		Methods:         "GET, POST",
+		MaxAge:          1 * time.Minute,
+	}))
+	router.ServeHTTP(w, req)
+	
+	if w.Header().Get(AllowOriginKey) != "http://localhost" {
+		t.Fatal("Improper Origin is set.")
+	}
+}
+
 func TestValidateMethods(t *testing.T) {
 	testFailMethod := "PUT"
 	testPassMethod := "GET"

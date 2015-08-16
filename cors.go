@@ -150,12 +150,14 @@ func Middleware(config Config) gin.HandlerFunc {
 
 			if valid {
 
-				// Allowed origins cannot be the string "*" cannot be used for a resource that supports credentials.
 				if config.Credentials {
 					context.Writer.Header().Set(AllowCredentialsKey, config.credentials)
-					context.Writer.Header().Set(AllowOriginKey, currentOrigin)
-				} else {
+					// Allowed origins cannot be the string "*" cannot be used for a resource that supports credentials.
+					context.Writer.Header().Set(AllowOriginKey, currentOrigin)	
+				} else if forceOriginMatch {
 					context.Writer.Header().Set(AllowOriginKey, "*")
+				} else {
+					context.Writer.Header().Set(AllowOriginKey, currentOrigin)
 				}
 
 				//If this is a preflight request, we are finished, quit.
