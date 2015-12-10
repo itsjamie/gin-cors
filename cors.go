@@ -120,6 +120,7 @@ func Middleware(config Config) gin.HandlerFunc {
 	return func(context *gin.Context) {
 		// Read the Origin header from the HTTP request
 		currentOrigin := context.Request.Header.Get(OriginKey)
+		context.Writer.Header().Add("Vary", OriginKey)
 
 		// CORS headers are added whenever the browser request includes an "Origin" header
 		// However, if no Origin is supplied, they should never be added.
@@ -153,7 +154,7 @@ func Middleware(config Config) gin.HandlerFunc {
 				if config.Credentials {
 					context.Writer.Header().Set(AllowCredentialsKey, config.credentials)
 					// Allowed origins cannot be the string "*" cannot be used for a resource that supports credentials.
-					context.Writer.Header().Set(AllowOriginKey, currentOrigin)	
+					context.Writer.Header().Set(AllowOriginKey, currentOrigin)
 				} else if forceOriginMatch {
 					context.Writer.Header().Set(AllowOriginKey, "*")
 				} else {
