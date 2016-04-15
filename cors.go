@@ -239,7 +239,7 @@ func validateRequestHeaders(requestHeaders string, config Config) bool {
 
 	for _, header := range headers {
 		match := false
-		header = strings.ToLower(header)
+		header = strings.ToLower(strings.Trim(header, " \t\r\n"))
 
 		for _, value := range config.requestHeaders {
 			if value == header {
