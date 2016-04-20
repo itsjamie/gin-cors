@@ -235,7 +235,7 @@ func validateRequestHeaders(requestHeaders string, config Config) bool {
 		return true
 	}
 
-	headers := strings.Split(requestHeaders, ", ")
+	headers := strings.Split(requestHeaders, ",")
 
 	for _, header := range headers {
 		match := false
