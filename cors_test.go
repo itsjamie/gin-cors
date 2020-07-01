@@ -192,6 +192,23 @@ func TestMatchOrigin(t *testing.T) {
 	}
 }
 
+func TestWildMatchOrigin(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/", nil)
+	w := httptest.NewRecorder()
+
+	req.Header.Set("Origin", "http://.testing.com")
+
+	router := gin.New()
+	router.Use(Middleware(Config{
+		Origins: "*.testing.com",
+	}))
+	router.ServeHTTP(w, req)
+
+	if w.Header().Get(AllowOriginKey) == "" {
+		t.Fatal("Origin matches, this header should be set.")
+	}
+}
+
 func TestForceOrigin(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
@@ -210,9 +227,9 @@ func TestForceOrigin(t *testing.T) {
 func TestForceOriginCredentails(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
-	
+
 	req.Header.Set("Origin", "http://localhost")
-	
+
 	router := gin.New()
 	router.Use(Middleware(Config{
 		Origins:         "http://localhost",
@@ -224,7 +241,7 @@ func TestForceOriginCredentails(t *testing.T) {
 		MaxAge:          1 * time.Minute,
 	}))
 	router.ServeHTTP(w, req)
-	
+
 	if w.Header().Get(AllowOriginKey) != "http://localhost" {
 		t.Fatal("Improper Origin is set.")
 	}

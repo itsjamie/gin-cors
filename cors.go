@@ -85,9 +85,9 @@ type Config struct {
 // One time, do the conversion from our the public facing Configuration,
 // to all the formats we use internally strings for headers.. slices for looping
 func (config *Config) prepare() {
-	config.origins = strings.Split(config.Origins, ", ")
-	config.methods = strings.Split(config.Methods, ", ")
-	config.requestHeaders = strings.Split(config.RequestHeaders, ", ")
+	config.origins = strings.Split(strings.ReplaceAll(config.Origins, " ", ""), ",")
+	config.methods = strings.Split(strings.ReplaceAll(config.Methods, " ", ""), ",")
+	config.requestHeaders = strings.Split(strings.ReplaceAll(config.RequestHeaders, " ", ""), ",")
 	config.maxAge = fmt.Sprintf("%.f", config.MaxAge.Seconds())
 
 	// Generates a boolean of value "true".
@@ -205,11 +205,53 @@ func handleRequest(context *gin.Context, config Config) bool {
 // Case-sensitive match of origin header
 func matchOrigin(origin string, config Config) bool {
 	for _, value := range config.origins {
-		if value == origin {
+		if matchString(value, origin) {
 			return true
 		}
 	}
 	return false
+}
+
+func matchString(pattern string, str string) bool {
+	EOF := len(str)
+	finalState := len(pattern) - 1
+
+	cursor := 0
+	nextState := 0
+	lastWild := -1
+
+	for cursor != EOF && nextState <= finalState {
+		if str[cursor] == pattern[nextState] {
+			if nextState != finalState {
+				nextState++
+			}
+		} else {
+			if pattern[nextState] != '*' {
+				if lastWild == -1 {
+					break
+				}
+				nextState = lastWild
+			} else {
+				lastWild = nextState
+			}
+			if nextState+1 >= len(pattern) {
+				// no lookahead
+				break
+			}
+			lookahead := pattern[nextState+1]
+			if str[cursor] == lookahead {
+				cursor--
+				nextState++
+			}
+			if lookahead == '*' {
+				nextState++
+			}
+		}
+		cursor++
+	}
+	matched := nextState == finalState
+
+	return matched
 }
 
 // Case-sensitive match of request method
