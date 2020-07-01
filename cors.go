@@ -205,7 +205,11 @@ func handleRequest(context *gin.Context, config Config) bool {
 // Case-sensitive match of origin header
 func matchOrigin(origin string, config Config) bool {
 	for _, value := range config.origins {
-		if matchString(value, origin) {
+		if strings.Contains(value, "*") {
+			if matchString(value, origin) {
+				return true
+			}
+		} else if value == origin {
 			return true
 		}
 	}

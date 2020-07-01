@@ -196,7 +196,7 @@ func TestWildMatchOrigin(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
 
-	req.Header.Set("Origin", "http://.testing.com")
+	req.Header.Set("Origin", "http://files.testing.com")
 
 	router := gin.New()
 	router.Use(Middleware(Config{
