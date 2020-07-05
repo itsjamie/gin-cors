@@ -102,6 +102,25 @@ func TestMismatchOrigin(t *testing.T) {
 	}
 }
 
+func TestWildMismatchOrigin(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/", nil)
+	w := httptest.NewRecorder()
+
+	req.Header.Set("Origin", "http://files.testing.com")
+
+	router := gin.New()
+
+	router.Use(Middleware(Config{
+		Origins: "http://*testing.io/*, http://sample.testing.com/*",
+	}))
+
+	router.ServeHTTP(w, req)
+
+	if w.Header().Get(AllowOriginKey) != "" {
+		t.Fatal("This should not match.")
+	}
+}
+
 func TestPreflightRequest(t *testing.T) {
 	req, _ := http.NewRequest("OPTIONS", "/", nil)
 	w := httptest.NewRecorder()
@@ -200,7 +219,7 @@ func TestWildMatchOrigin(t *testing.T) {
 
 	router := gin.New()
 	router.Use(Middleware(Config{
-		Origins: "*.testing.com",
+		Origins: "http://files.*testing, *://files.testing*",
 	}))
 	router.ServeHTTP(w, req)
 

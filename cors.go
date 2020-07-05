@@ -205,11 +205,7 @@ func handleRequest(context *gin.Context, config Config) bool {
 // Case-sensitive match of origin header
 func matchOrigin(origin string, config Config) bool {
 	for _, value := range config.origins {
-		if strings.Contains(value, "*") {
-			if matchString(value, origin) {
-				return true
-			}
-		} else if value == origin {
+		if matchString(value, origin) {
 			return true
 		}
 	}
@@ -218,44 +214,45 @@ func matchOrigin(origin string, config Config) bool {
 
 func matchString(pattern string, str string) bool {
 	EOF := len(str)
-	finalState := len(pattern) - 1
-
-	cursor := 0
-	nextState := 0
-	lastWild := -1
-
-	for cursor != EOF && nextState <= finalState {
-		if str[cursor] == pattern[nextState] {
-			if nextState != finalState {
-				nextState++
-			}
-		} else {
-			if pattern[nextState] != '*' {
-				if lastWild == -1 {
-					break
-				}
-				nextState = lastWild
-			} else {
-				lastWild = nextState
-			}
-			if nextState+1 >= len(pattern) {
-				// no lookahead
-				break
-			}
-			lookahead := pattern[nextState+1]
-			if str[cursor] == lookahead {
-				cursor--
-				nextState++
-			}
-			if lookahead == '*' {
-				nextState++
-			}
+	final := len(pattern)
+	skip := -1
+	for i := 0; i < final; i++ {
+		if pattern[i] == '*' {
+			skip = i
 		}
-		cursor++
 	}
-	matched := nextState == finalState
+	if skip == -1 && pattern != str {
+		return false
+	}
+	nstr := EOF - (final - skip) + 1
+	if skip != -1 && pattern[skip+1:final] != str[nstr:EOF] {
+		return false
+	}
 
-	return matched
+	loopback := -1
+	current := 0
+	for cursor := 0; cursor < EOF && current != final; cursor++ {
+		if str[cursor] == pattern[current] {
+			current++
+		} else if pattern[current] == '*' {
+			loopback = current
+			if current+1 < final && pattern[current+1] == str[cursor] ||
+				current+1 < final && pattern[current+1] == '*' {
+				current++
+				cursor--
+			}
+		} else if loopback == -1 {
+			break
+		} else {
+			current = loopback
+			cursor--
+		}
+	}
+
+	if current == skip && skip+1 == final {
+		return pattern[current] == '*'
+	}
+	return current == final
 }
 
 // Case-sensitive match of request method
