@@ -85,9 +85,9 @@ type Config struct {
 // One time, do the conversion from our the public facing Configuration,
 // to all the formats we use internally strings for headers.. slices for looping
 func (config *Config) prepare() {
-	config.origins = strings.Split(config.Origins, ", ")
-	config.methods = strings.Split(config.Methods, ", ")
-	config.requestHeaders = strings.Split(config.RequestHeaders, ", ")
+	config.origins = strings.Split(strings.ReplaceAll(config.Origins, " ", ""), ",")
+	config.methods = strings.Split(strings.ReplaceAll(config.Methods, " ", ""), ",")
+	config.requestHeaders = strings.Split(strings.ReplaceAll(config.RequestHeaders, " ", ""), ",")
 	config.maxAge = fmt.Sprintf("%.f", config.MaxAge.Seconds())
 
 	// Generates a boolean of value "true".
@@ -205,11 +205,54 @@ func handleRequest(context *gin.Context, config Config) bool {
 // Case-sensitive match of origin header
 func matchOrigin(origin string, config Config) bool {
 	for _, value := range config.origins {
-		if value == origin {
+		if matchString(value, origin) {
 			return true
 		}
 	}
 	return false
+}
+
+func matchString(pattern string, str string) bool {
+	EOF := len(str)
+	final := len(pattern)
+	skip := -1
+	for i := 0; i < final; i++ {
+		if pattern[i] == '*' {
+			skip = i
+		}
+	}
+	if skip == -1 && pattern != str {
+		return false
+	}
+	nstr := EOF - (final - skip) + 1
+	if skip != -1 && pattern[skip+1:final] != str[nstr:EOF] {
+		return false
+	}
+
+	loopback := -1
+	current := 0
+	for cursor := 0; cursor < EOF && current != final; cursor++ {
+		if str[cursor] == pattern[current] {
+			current++
+		} else if pattern[current] == '*' {
+			loopback = current
+			if current+1 < final && pattern[current+1] == str[cursor] ||
+				current+1 < final && pattern[current+1] == '*' {
+				current++
+				cursor--
+			}
+		} else if loopback == -1 {
+			break
+		} else {
+			current = loopback
+			cursor--
+		}
+	}
+
+	if current == skip && skip+1 == final {
+		return pattern[current] == '*'
+	}
+	return current == final
 }
 
 // Case-sensitive match of request method
