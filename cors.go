@@ -213,6 +213,9 @@ func matchOrigin(origin string, config Config) bool {
 }
 
 func matchString(pattern string, str string) bool {
+	if pattern == str {
+		return true
+	}
 	EOF := len(str)
 	final := len(pattern)
 	skip := -1
@@ -225,6 +228,10 @@ func matchString(pattern string, str string) bool {
 		return false
 	}
 	nstr := EOF - (final - skip) + 1
+	if nstr < 0 {
+		// input shorter than pattern
+		return false
+	}
 	if skip != -1 && pattern[skip+1:final] != str[nstr:EOF] {
 		return false
 	}

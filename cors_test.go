@@ -111,7 +111,7 @@ func TestWildMismatchOrigin(t *testing.T) {
 	router := gin.New()
 
 	router.Use(Middleware(Config{
-		Origins: "http://*testing.io/*, http://sample.testing.com/*",
+		Origins: "http://*testing.io/*, http://sample.testing.com/*, http://this-is-not-a-typical-short-url.*.testing.com/expected-prefix",
 	}))
 
 	router.ServeHTTP(w, req)
