@@ -10,7 +10,7 @@ A Default Config for example is below:
 		RequestHeaders: "Origin, Authorization, Content-Type",
 		ExposedHeaders: "",
 		MaxAge: 1 * time.Minute,
-		Credentials: true,
+		Credentials: false,
 		ValidateHeaders: false,
 	}
 */
