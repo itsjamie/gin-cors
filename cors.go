@@ -114,7 +114,7 @@ func Middleware(config Config) gin.HandlerFunc {
 		panic("You must set at least a single valid origin. If you don't want CORS, to apply, simply remove the middleware.")
 	}
 
-	if config.Origins == "*" {
+	if config.Origins == "*" && config.Credentials == false {
 		forceOriginMatch = true
 	}
 
