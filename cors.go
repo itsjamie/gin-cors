@@ -85,6 +85,10 @@ type Config struct {
 // One time, do the conversion from our the public facing Configuration,
 // to all the formats we use internally strings for headers.. slices for looping
 func (config *Config) prepare() {
+	if (config.Origins == "*" && config.Credentials == true) {
+		panic("Do not use Origins = \"*\" and Credentials = true together.")
+	}
+	
 	config.origins = strings.Split(config.Origins, ", ")
 	config.methods = strings.Split(config.Methods, ", ")
 	config.requestHeaders = strings.Split(config.RequestHeaders, ", ")
